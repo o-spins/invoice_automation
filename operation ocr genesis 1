@@ -1,0 +1,49 @@
+import pdfplumber
+import re
+
+def extract_text_from_section(pdf_path, page_number, section_coords):
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_number - 1]  # Adjust for zero-based indexing
+
+        # Crop the page to the specified section coordinates
+        cropped_page = page.crop(section_coords)
+
+        # Extract text from the cropped section
+        text = cropped_page.extract_text()
+
+    return text
+
+def extract_7_digit_numbers(text):
+    # Define a regex pattern to match 7-digit numbers
+    pattern = r'\b\d{7}\b'
+    
+    # Use re.findall to find all matches in the text
+    seven_digit_numbers = re.findall(pattern, text)
+    
+    return seven_digit_numbers
+
+def main():
+    
+    
+    #page_number = 6  # Specify the page number
+    
+    pdf_path = 'C:\\Users\\AMedina\\Downloads\\ferguson invoices.pdf'
+    with pdfplumber.open(pdf_path) as pdf:
+
+        for page_num in range(len(pdf.pages)):
+            page = pdf.pages[page_num]
+		
+    
+            section_coords = (342, 34, 416, 62)  # (x0, y0, x1, y1) coordinates of the section
+
+            extracted_text = extract_text_from_section(pdf_path, page_num, section_coords)
+    
+            seven_digit_numbers = extract_7_digit_numbers(extracted_text)
+
+            print(f"Extracted 7-Digit Numbers from section of page {page_num + 1}:")
+
+            for number in seven_digit_numbers:
+                print(number)
+
+if __name__ == "__main__":
+    main()
