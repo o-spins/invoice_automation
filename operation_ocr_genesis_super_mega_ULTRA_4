@@ -1,0 +1,73 @@
+import tkinter as tk
+from tkinter import filedialog
+import pdfplumber
+import re
+
+class PDFAnalyzerApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("PDF Analyzer")
+
+        # Create widgets
+        self.load_button = tk.Button(master, text="Load PDF", command=self.load_pdf)
+        self.load_button.pack(pady=10)
+
+        self.result_text = tk.Text(master, height=55, width=80)
+        self.result_text.pack(pady=10)
+
+    def load_pdf(self):
+        file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
+        if file_path:
+            with pdfplumber.open(file_path) as pdf:
+                result = self.analyze_pdf(pdf)
+                self.result_text.delete(1.0, tk.END)  # Clear previous results
+                self.result_text.insert(tk.END, result)
+
+    def analyze_pdf(self, pdf):
+        result = ""
+        for page_num in range(len(pdf.pages)):
+            result += f"Invoice data extracted from page: {page_num + 1}\n"
+            result += f"Number:          {self.invoice_coords(pdf, page_num)}\n"
+            result += f"Job Number:      {self.job_num_coords(pdf, page_num)}\n"
+            result += f"Total Amount:    {self.total_amount_coords(pdf, page_num)}\n"
+            result += f"Date:            {self.invoice_date_coords(pdf, page_num)}\n\n"
+        return result
+
+    def text_extract(self, page, section_coords):
+        cropped_page = page.crop(section_coords)
+        text = cropped_page.extract_text()
+        return text
+
+    def regex(self, text):
+        pattern = r'\b\d{5}\b'
+        five_digit_numbers = re.findall(pattern, text)
+        return five_digit_numbers
+
+    def invoice_coords(self, pdf, page_num):
+        invoice_coord = (343, 45, 415, 60)
+        invoice_extract = self.text_extract(pdf.pages[page_num], invoice_coord)
+        return invoice_extract
+
+    def job_num_coords(self, pdf, page_num):
+        job_num_coord = (67, 213, 90, 221)
+        job_num_extract = self.text_extract(pdf.pages[page_num], job_num_coord)
+
+        if not job_num_extract.isdigit():
+            return "Job Number not found"
+        else:
+            return job_num_extract
+
+    def total_amount_coords(self, pdf, page_num):
+        total_coord = (416, 47, 484, 60)
+        total_extract = self.text_extract(pdf.pages[page_num], total_coord)
+        return total_extract
+
+    def invoice_date_coords(self, pdf, page_num):
+        date_coord = (504, 274, 543, 284)
+        date_extract = self.text_extract(pdf.pages[page_num], date_coord)
+        return date_extract
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PDFAnalyzerApp(root)
+    root.mainloop()
