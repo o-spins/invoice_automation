@@ -1,0 +1,74 @@
+import pdfplumber
+import re
+
+
+def text_extract(pdf, page_num, section_coords):
+    page = pdf.pages[page_num]
+
+    cropped_page = page.crop(section_coords)
+    text = cropped_page.extract_text()
+
+    return text
+
+
+def regex(text):
+    pattern = r'\b\d{5}\b'
+    five_digit_numbers = re.findall(pattern, text)
+
+    return five_digit_numbers
+
+
+def invoice_coords(pdf, page_num):
+    invoice_coord = (343, 45, 415, 60)
+    invoice_extract = text_extract(pdf, page_num, invoice_coord)
+
+    return invoice_extract
+
+
+def job_num_coords(pdf, page_num):
+    job_num_coord = (67, 213, 90, 221)
+    job_num_extract = text_extract(pdf, page_num, job_num_coord)
+
+    if not job_num_extract.isdigit():
+        return "Job Number not found"
+
+    else:
+        return job_num_extract
+
+
+def total_amount_coords(pdf, page_num):
+    total_coord = (416, 47, 484, 60)
+    total_extract = text_extract(pdf, page_num, total_coord)
+
+    return total_extract
+
+
+def invoice_date_coords(pdf, page_num):
+    date_coord = (504, 274, 543, 284)
+    date_extract = text_extract(pdf, page_num, date_coord)
+
+    return date_extract
+
+
+def display(pdf, page_num):
+
+    print(f"Invoice Number for page: {page_num + 1}")
+    print(f"Invoice Number:          {invoice_coords(pdf, page_num)}")
+    print(f"Job Number:              {job_num_coords(pdf, page_num)}")
+    print(f"Total Amount:            {total_amount_coords(pdf, page_num)}")
+    print(f"Invoice Date:            {invoice_date_coords(pdf, page_num)}")
+
+    print("\n")
+
+
+def main():
+    pdf_path = "C:\\Users\\AMedina\\Downloads\\aylin-cool.pdf"
+
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_num in range(len(pdf.pages)):
+
+            display(pdf, page_num)
+
+
+if __name__ == "__main__":
+    main()
