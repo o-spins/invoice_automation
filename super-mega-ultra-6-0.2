@@ -7,15 +7,15 @@ from tkinter import filedialog
 class PDFAnalyzerApp:
     def __init__(self, window):
         self.window = window
-        self.master.title("PDF Analyzer")
+        self.window.title("PDF Analyzer")
         
         self.load_button = tk.Button(window, text="Load PDF", command=self.load_pdf)
         self.load_button.pack(pady=10)
         
-        self.export_button = tk.Button(master, text="Export CSV", command=self.export_csv) 
+        self.export_button = tk.Button(window, text="Export CSV", command=self.export_csv) 
         self.export_button.pack(pady=10)
 
-        self.result_text = tk.Text(master, height=55, width=80) 
+        self.result_text = tk.Text(window, height=55, width=80) 
         self.result_text.pack(pady=10)
 
     def load_pdf(self):
@@ -37,17 +37,19 @@ class PDFAnalyzerApp:
 
         self.export_data.append([number, job_number, total_amount, date])
 
-    def display(self, pdf, number, job_number, total_amount, date):
+        return [number, job_number, total_amount, date]
+
+    def display(self, pdf):
         result = ""
         
         for page_num in range(len(pdf.pages)):
-            info = pdf_info(pdf, page_num)
+            info = self.pdf_info(pdf, page_num)
 
             result += f"Invoice data extracted from page: {page_num + 1}\n"
-            result += f"Number:          {number}\n"
-            result += f"Job Number:      {job_number}\n"
-            result += f"Total Amount:    {total_amount}\n"
-            result += f"Date:            {date}\n\n"
+            result += f"Number:          {info[0]}\n"
+            result += f"Job Number:      {info[1]}\n"
+            result += f"Total Amount:    {info[2]}\n"
+            result += f"Date:            {info[3]}\n\n"
 
         return result    
 
@@ -101,3 +103,5 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = PDFAnalyzerApp(root)
     root.mainloop()  
+
+    
