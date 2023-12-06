@@ -10,14 +10,16 @@ class PDFAnalyzerApp:
         self.master.title("PDF Analyzer")
 
         # Create widgets
-        self.load_button = tk.Button(master, text="Load PDF", command=self.load_pdf)
-        self.load_button.pack(pady=10)
 
-        self.result_text = tk.Text(master, height=55, width=80)
+        self.load_button = tk.Button(master, text="Load PDF", command=self.load_pdf) #this is the button to load PDF
+        self.load_button.pack(pady=10)
+        
+        self.export_button = tk.Button(master, text="Export CSV", command=self.export_csv) #this is the button for exporting
+        self.export_button.pack(pady=10)
+
+        self.result_text = tk.Text(master, height=55, width=80) #this is the area where the load button results show. you can change the size here
         self.result_text.pack(pady=10)
 
-        self.export_button = tk.Button(master, text="Export CSV", command=self.export_csv)
-        self.export_button.pack(pady=10)
 
         # Initialize data list for CSV export
         self.export_data = []
