@@ -22,27 +22,35 @@ class PDFAnalyzerApp:
         self.export_data = []
 
         self.export_button = tk.Button(window, text="Export CSV", command=self.export_csv)
-        self.export_button.place(x=110, y=15)
+        self.export_button.place(x=85, y=15)
 
         self.load_button = tk.Button(window, text="Load PDF", command=self.load_pdf)
-        self.load_button.place(x=30, y=15)
+        self.load_button.place(x=15, y=15)
 
         self.quit_button = tk.Button(window, text="Quit", command=quit)
         self.quit_button.place(x=600, y=15)
+
+        # idk what to do with this yet i just added it lol
+        self.edit_button = tk.Button(window, text="Edit/Save", command="")
+        self.edit_button.place(x=435, y=15)
+
+        # this is to clear the displayed text
+        self.clear_button = tk.Button(window, text="Clear Text", command=self.clear_text)
+        self.clear_button.place(x=500, y=15)
 
         # Dropdown menu
         self.page_options = 'Choose from below'
         self.selected_page = tk.StringVar()
         self.selected_page.set(self.page_options)
-        self.page_dropdown = ttk.Combobox(window, width=27, textvariable=self.selected_page)
+        self.page_dropdown = ttk.Combobox(window, width=18, textvariable=self.selected_page)
 
         self.page_dropdown['values'] = ('Ferguson', 'Farnsworth')
 
-        self.page_dropdown.place(x=325, y=16)
+        self.page_dropdown.place(x=292, y=16)
 
         # Label for selected invoice type
         self.invoice_type_label = tk.Label(window, text="Selected Invoice Type:")
-        self.invoice_type_label.place(x=200, y=17)
+        self.invoice_type_label.place(x=170, y=17)
 
         # Create a scrolled text widget with vertical scrollbar
         self.result_text = scrolledtext.ScrolledText(window, height=51, width=80)
@@ -59,7 +67,7 @@ class PDFAnalyzerApp:
             self.export_data = []
 
             with pdfplumber.open(file_path) as pdf:
-                result = self.display(pdf)
+                result = self.display(pdf, file_path)
                 self.result_text.delete(1.0, tk.END)
                 self.result_text.insert(tk.END, result)
 
@@ -73,8 +81,8 @@ class PDFAnalyzerApp:
 
         return [number, job_number, total_amount, date]
 
-    def display(self, pdf):
-        result = ""
+    def display(self, pdf, file_path):
+        result = f"PDF File: {file_path}\n\n"
 
         for page_num in range(len(pdf.pages)):
             info = self.pdf_info(pdf, page_num)
@@ -139,6 +147,9 @@ class PDFAnalyzerApp:
                 csv_writer = csv.writer(csvfile)
                 csv_writer.writerow(["Number", "Job Number", "Total Amount", "Date"])
                 csv_writer.writerows(self.export_data)
+
+    def clear_text(self):
+        self.result_text.delete(1.0, tk.END)
 
 
 if __name__ == "__main__":
