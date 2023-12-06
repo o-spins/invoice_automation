@@ -4,12 +4,13 @@ import pdfplumber
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import scrolledtext  # Import scrolledtext for a scrollable Text widget
+from tkinter import ttk
 
 
 class PDFAnalyzerApp:
     def __init__(self, window):
         self.window = window
-        self.window.title("PDF Analyzer")
+        self.window.title("Invoice Analyzer")
         self.window.geometry("665x900")  # sets the window size
         self.window.resizable(False, True)  # makes the window resizable
         # path for window icon
@@ -21,13 +22,27 @@ class PDFAnalyzerApp:
         self.export_data = []
 
         self.export_button = tk.Button(window, text="Export CSV", command=self.export_csv)
-        self.export_button.place(x=120, y=15)
+        self.export_button.place(x=110, y=15)
 
         self.load_button = tk.Button(window, text="Load PDF", command=self.load_pdf)
         self.load_button.place(x=30, y=15)
 
         self.quit_button = tk.Button(window, text="Quit", command=quit)
         self.quit_button.place(x=600, y=15)
+
+        # Dropdown menu
+        self.page_options = 'Choose from below'
+        self.selected_page = tk.StringVar()
+        self.selected_page.set(self.page_options)
+        self.page_dropdown = ttk.Combobox(window, width=27, textvariable=self.selected_page)
+
+        self.page_dropdown['values'] = ('Ferguson', 'Farnsworth')
+
+        self.page_dropdown.place(x=325, y=16)
+
+        # Label for selected invoice type
+        self.invoice_type_label = tk.Label(window, text="Selected Invoice Type:")
+        self.invoice_type_label.place(x=200, y=17)
 
         # Create a scrolled text widget with vertical scrollbar
         self.result_text = scrolledtext.ScrolledText(window, height=51, width=80)
