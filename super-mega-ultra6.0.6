@@ -132,6 +132,13 @@ class PDFAnalyzerApp:
         return date_extract
 
     def export_csv(self):
+        if self.result_text.get(1.0, tk.END).strip() == "All data has been cleared.":
+            # If the displayed text is "All data has been cleared.", update it
+            self.result_text.delete(1.0, tk.END)
+            self.result_text.insert(tk.END, "You need to select a file before exporting!"
+                                            " Click on Load PDF and select a file.")
+            return
+
         if not self.export_data:
             # If no data is loaded, display a message
             self.result_text.delete(1.0, tk.END)
@@ -150,6 +157,7 @@ class PDFAnalyzerApp:
 
     def clear_text(self):
         self.result_text.delete(1.0, tk.END)
+        self.result_text.insert(tk.END, "All data has been cleared.")
 
 
 if __name__ == "__main__":
