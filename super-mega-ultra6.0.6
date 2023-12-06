@@ -1,0 +1,132 @@
+import re
+import csv
+import pdfplumber
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import scrolledtext  # Import scrolledtext for a scrollable Text widget
+
+
+class PDFAnalyzerApp:
+    def __init__(self, window):
+        self.window = window
+        self.window.title("PDF Analyzer")
+        self.window.geometry("665x900")  # sets the window size
+        self.window.resizable(False, True)  # makes the window resizable
+        # path for window icon
+        self.window.iconbitmap(
+            "C:\\Users\\AMedina\\PycharmProjects\\operation_ocr_genesis_super_mega_ULTRA_4\\"
+            "super-mega-ultra6.0.3\\rglogorevised.ico")  # you will need to change this for it to work elsewhere!!!!
+
+        # Initialize export_data attribute
+        self.export_data = []
+
+        self.export_button = tk.Button(window, text="Export CSV", command=self.export_csv)
+        self.export_button.place(x=120, y=15)
+
+        self.load_button = tk.Button(window, text="Load PDF", command=self.load_pdf)
+        self.load_button.place(x=30, y=15)
+
+        self.quit_button = tk.Button(window, text="Quit", command=quit)
+        self.quit_button.place(x=600, y=15)
+
+        # Create a scrolled text widget with vertical scrollbar
+        self.result_text = scrolledtext.ScrolledText(window, height=51, width=80)
+        self.result_text.place(x=5, y=50)
+
+        # Add signature label
+        self.signature_label = tk.Label(window, text="Created by Aylin and Axel at RGSP", font=("Arial", 8))
+        self.signature_label.place(x=5, y=870)
+
+    def load_pdf(self):
+        file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
+
+        if file_path:
+            self.export_data = []
+
+            with pdfplumber.open(file_path) as pdf:
+                result = self.display(pdf)
+                self.result_text.delete(1.0, tk.END)
+                self.result_text.insert(tk.END, result)
+
+    def pdf_info(self, pdf, page_num):
+        number = self.invoice_coords(pdf, page_num)
+        job_number = self.job_num_coords(pdf, page_num)
+        total_amount = self.total_amount_coords(pdf, page_num)
+        date = self.invoice_date_coords(pdf, page_num)
+
+        self.export_data.append([number, job_number, total_amount, date])
+
+        return [number, job_number, total_amount, date]
+
+    def display(self, pdf):
+        result = ""
+
+        for page_num in range(len(pdf.pages)):
+            info = self.pdf_info(pdf, page_num)
+
+            result += f"Invoice data extracted from page: {page_num + 1}\n"
+            result += f"Number:          {info[0]}\n"
+            result += f"Job Number:      {info[1]}\n"
+            result += f"Total Amount:    {info[2]}\n"
+            result += f"Date:            {info[3]}\n\n"
+
+        return result
+
+    @staticmethod
+    def text_extract(page, section_coords):
+        cropped_page = page.crop(section_coords)
+        text = cropped_page.extract_text()
+        return text
+
+    @staticmethod
+    def regex(text):
+        pattern = r'\b\d{5}\b'
+        five_digit_numbers = re.findall(pattern, text)
+        return five_digit_numbers
+
+    def invoice_coords(self, pdf, page_num):
+        invoice_coord = (343, 45, 415, 60)
+        invoice_extract = self.text_extract(pdf.pages[page_num], invoice_coord)
+        return invoice_extract
+
+    def job_num_coords(self, pdf, page_num):
+        job_num_coord = (67, 213, 90, 221)
+        job_num_extract = self.text_extract(pdf.pages[page_num], job_num_coord)
+
+        if not job_num_extract.isdigit():
+            return "Job Number not found"
+        else:
+            return job_num_extract
+
+    def total_amount_coords(self, pdf, page_num):
+        total_coord = (416, 47, 484, 60)
+        total_extract = self.text_extract(pdf.pages[page_num], total_coord)
+        return total_extract
+
+    def invoice_date_coords(self, pdf, page_num):
+        date_coord = (504, 274, 543, 284)
+        date_extract = self.text_extract(pdf.pages[page_num], date_coord)
+        return date_extract
+
+    def export_csv(self):
+        if not self.export_data:
+            # If no data is loaded, display a message
+            self.result_text.delete(1.0, tk.END)
+            self.result_text.insert(tk.END, "You need to select a file before exporting!"
+                                            " Click on Load PDF and select a file.")
+            return
+
+        # Proceed with exporting the CSV if data is loaded
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+
+        if file_path:
+            with open(file_path, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                csv_writer.writerow(["Number", "Job Number", "Total Amount", "Date"])
+                csv_writer.writerows(self.export_data)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = PDFAnalyzerApp(root)
+    root.mainloop()
