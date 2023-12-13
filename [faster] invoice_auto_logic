@@ -1,0 +1,91 @@
+import re
+import csv
+import pdfplumber
+from tkinter import filedialog
+
+
+def open_pdf():
+    file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf")])
+
+    with pdfplumber.open(file_path) as pdf:
+        display(pdf, file_path)
+
+
+def display(pdf, file_path):
+    result = f"PDF File: {file_path}\n\n"
+
+    for page_num in range(len(pdf.pages)):
+        info = pdf_info(pdf, page_num)
+
+        result += f"Invoice data extracted from page: {page_num + 1}\n"
+        result += f"Number:          {info[0]}\n"
+        result += f"Job Number:      {info[1]}\n"
+        result += f"Total Amount:    {info[2]}\n"
+        result += f"Date:            {info[3]}\n\n"
+
+    print(result)
+
+
+def pdf_info(pdf, page_num):
+    export_data = []
+
+    number = num_coord(pdf, page_num)
+    job_number = job_coord(pdf, page_num)
+    total_amount = amount_coord(pdf, page_num)
+    date = date_coord(pdf, page_num)
+
+    export_data.append([number, job_number, total_amount, date])
+
+    return [number, job_number, total_amount, date]
+
+
+def num_coord(pdf, page_num):
+    num_coord_ferg = (343, 45, 415, 60)
+    extract = text_extract(pdf.pages[page_num], num_coord_ferg)
+    return extract
+
+
+def job_coord(pdf, page_num):
+    job_coord_ferg = (67, 213, 90, 221)
+    extract = text_extract(pdf.pages[page_num], job_coord_ferg)
+
+    if not extract.isdigit():
+        return "Job Number not found"
+    else:
+        return extract
+
+
+def amount_coord(pdf, page_num):
+    amount_coord_ferg = (416, 47, 484, 60)
+    extract = text_extract(pdf.pages[page_num], amount_coord_ferg)
+    return extract
+
+
+def date_coord(pdf, page_num):
+    date_coord_ferg = (504, 274, 543, 284)
+    extract = text_extract(pdf.pages[page_num], date_coord_ferg)
+    return extract
+
+
+def text_extract(page, section_coord):
+    section = page.crop(section_coord)
+    text = section.extract_text()
+    return text
+
+
+def export_csv(export_data):
+    export = input("Export to CSV? y/n: ")
+
+    if export == 'y':
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
+
+        with open(file_path, 'w') as csvfile:
+            csv_write = csv.writer(csvfile)
+            csv_write.writerow(["Number", "Job Number", "Total Amount", "Date"])
+            csv_write.writerows(export_data)
+
+
+def main():
+    open_pdf()
+
+main()
