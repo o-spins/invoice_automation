@@ -1,0 +1,61 @@
+import pdfplumber
+import re
+
+
+def extract_text_from_section(pdf_path, page_number, section_coords):
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_number]
+
+        # Crop the page to the specified section coordinates
+        cropped_page = page.crop(section_coords)
+
+        # Extract text from the cropped section
+        text = cropped_page.extract_text()
+
+    return text
+
+
+def extract_5_digit_numbers(text):
+    # Define a regex pattern to match 5-digit numbers
+    pattern = r'\b\d{5}\b'
+
+    # Use re.findall to find all matches in the text
+    five_digit_numbers = re.findall(pattern, text)
+
+    return five_digit_numbers
+
+def main():
+    pdf_path = 'C:\\Users\\AMedina\\Downloads\\aylin-cool.pdf'
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_num in range(len(pdf.pages)):
+            page = pdf.pages[page_num]
+
+            invoice_coords = (343, 45, 415, 60)  # (x0, y0, x1, y1) INVOICE COORDS
+            job_num_coords = (67, 213, 90, 221)  # JOB NUM COORDS
+            total_coords = (416, 47, 484, 60)  # TOTAL AMOUNT COORDS
+            date_coords = (504, 274, 543, 284)  # DATE COORDS
+
+            extracted_text_invoice = extract_text_from_section(pdf_path, page_num, invoice_coords)
+            extracted_text_job_num = extract_text_from_section(pdf_path, page_num, job_num_coords)
+            extracted_text_total = extract_text_from_section(pdf_path, page_num, total_coords)
+            extracted_text_date = extract_text_from_section(pdf_path, page_num, date_coords)
+
+            five_digit_numbers = extract_5_digit_numbers(extracted_text_job_num)
+
+            print(f"Extracted info from page {page_num + 1}:")
+
+            print(f"Invoice Number: {extracted_text_invoice}")
+            #print(f"Job Number:     {extracted_text_job_num}")
+
+            if extracted_text_job_num.isdigit() and len(extracted_text_job_num) == 5:
+                print(f"Job Number:     {extracted_text_job_num}")
+            else:
+                print("Job Number:  NO JOB NUMBER!!!???")
+
+            print(f"Total Due:      {extracted_text_total}")
+            print(f"Invoice Date:   {extracted_text_date}")
+            print("\n")
+
+
+if __name__ == "__main__":
+    main()
