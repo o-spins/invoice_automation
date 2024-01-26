@@ -1,0 +1,134 @@
+import csv  # Export to spreadsheet
+import pdfplumber  # Extract information from PDF
+from tkinter import filedialog  # Prompt to choose file
+
+
+def open_pdf():  # open_pdf(): Open prompt to choose PDF file
+    file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf")])  # Open prompt
+
+    with pdfplumber.open(file_path) as pdf:  # When PDF is chosen, call the display function
+        display(pdf, file_path)
+
+
+def display(pdf, file_path):  # display(): Display information that is extracted from invoice
+    export_data = []  # Empty array to store info string
+
+    result = f"PDF File: {file_path}\n\n"  # Beginning to info string
+
+    for page_num in range(len(pdf.pages)):  # For every page in the PDF,
+
+        info = pdf_info(pdf, page_num)  # Call pdf_info to extract info for current invoice,
+
+        result += f"Invoice data extracted from page: {page_num + 1}\n"
+
+        result += f"Number:            {info[0]}\n"
+        result += f"Job Number:        {info[1]}\n"
+        result += f"Total Amount:      {info[2]}\n"
+        result += f"Date:              {info[3]}\n"  # From the info array, write into string
+        result += f"PO:                {info[4]}\n"
+        result += f"Pages in invoice:  {info[5]}\n\n"
+
+        export_data.append([info[0], info[1], info[2], info[3], info[4], info[5]])  # Append info string to array of strings
+
+    print(result)  # Print out info string to terminal
+    export_csv(export_data)  # Call export_csv to prompt conversion
+
+
+def pdf_info(pdf, page_num):  # pdf_info(): Uses coords to extract information from invoice page. Returns array of invoice info
+    number = num_coord(pdf, page_num)
+
+    job_number = job_coord(pdf, page_num)
+    total_amount = amount_coord(pdf, page_num)
+    date = date_coord(pdf, page_num)  # Use coords to get information from invoice page and store that info
+    po = po_coord(pdf, page_num)
+    page_number = page_num_coord(pdf, page_num)
+
+    return [number, job_number, total_amount, date, po, page_number]  # Return info as array
+
+
+def num_coord(pdf, page_num):  # num_coord(): Coords for invoice number on Ferguson invoice. Returns invoice number
+    num = (343, 45, 415, 60)
+    extract = text_extract(pdf.pages[page_num], num)
+    return extract
+
+
+def job_coord(pdf, page_num):  # job_coord(): Coords for job number on Ferguson invoice. Returns job number, or error message if no job number
+    job = (67, 213, 90, 221)
+    extract = text_extract(pdf.pages[page_num], job)
+
+    if not extract.isdigit():
+        return "Job Number not found"  # IF job number isn’t valid, send error message
+
+    else:
+        return extract
+
+
+def amount_coord(pdf, page_num):  # amount_coord(): Coords for total due on Ferguson invoice. Returns total due
+    amount = (416, 47, 484, 60)
+    extract = text_extract(pdf.pages[page_num], amount)
+    return extract
+
+
+def date_coord(pdf, page_num):  # date_coord(): Coords for date on Ferguson invoice. Returns date
+    date = (504, 274, 543, 284)
+    extract = text_extract(pdf.pages[page_num], date)
+    return extract
+
+
+def billed_coord(pdf,
+                 page_num):  # billed_coord(): Coords for “billed to” job on Ferguson invoice. Returns “billed to” name
+    billed = (66, 214, 194, 220)
+    extract = text_extract(pdf.pages[page_num], billed)
+    return extract
+
+
+def po_coord(pdf, page_num):  # po_coord(): Coords for PO on Ferguson invoice. Returns PO #
+    po = (209, 274, 257, 284)
+    extract = text_extract(pdf.pages[page_num], po)
+
+    if "PO" in extract:
+        return extract
+    else:
+        return "No PO"
+
+
+def job_name_coord(pdf, page_num):  # job_name_coord(): Coords for job name on Ferguson invoice. Returns job name
+    job_name = (370, 276, 498, 283)
+    extract = text_extract(pdf.pages[page_num], job_name)
+    return extract
+
+
+def page_num_coord(pdf, page_num):
+    page_num_inv = (560, 49, 595, 58)
+    extract = text_extract(pdf.pages[page_num], page_num_inv)
+
+    page_num_inv_of = (582, 48, 591, 57)
+    extract_of = text_extract(pdf.pages[page_num], page_num_inv_of)
+
+    return extract
+
+
+def text_extract(page, section_coord):  # text_extract(): Extract text using coordinate sections. Returns gathered text.
+    section = page.crop(section_coord)
+    text = section.extract_text()
+    return text
+
+
+def export_csv(export_data):  # export_csv(): Export information into spreadsheet
+    export = input("Export to CSV? y/n: ")  # Prompt for export
+
+    if export == 'y':  # IF yes to export, open dialogue prompt to name file
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
+
+        with open(file_path, 'w') as csvfile:  # Write to CSV file using information gathered from PDF
+            csv_write = csv.writer(csvfile)
+            csv_write.writerow(["Number", "Job Number", "Total Amount", "Date"])
+            csv_write.writerows(export_data)
+
+
+def main():  # main function, calls open_pdf
+    open_pdf()
+
+
+main()
+
