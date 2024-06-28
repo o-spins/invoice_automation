@@ -1,0 +1,130 @@
+import tkinter as tk
+from tkinter import filedialog
+import pdfplumber
+import csv
+
+class ServiceInvoiceCoords:
+    def __init__(self, pdf, page, page_num, section):
+        self.pdf = pdf
+        self.page = page
+        self.page_num = page_num
+        self.section = section
+
+    def job(self, pdf, page_num):
+        job_coord = (176, 269, 285, 286)
+        job_extract = self.extract(pdf.pages[page_num], job_coord)
+
+        return job_extract
+    
+    def date(self, pdf, page_num):
+        date_coord = (502, 270, 543, 287)
+        date_extract = self.extract(pdf.pages[page_num], date_coord)
+
+        return date_extract
+    
+    def inv_num(self, pdf, page_num):
+        inv_coord = (356, 48, 403, 58)
+        inv_extract = self.extract(pdf.pages[page_num], inv_coord)
+
+        return inv_extract
+    
+    def total(self, pdf, page_num):
+        total_coord = (419, 46, 476, 59)
+        total_extract = self.extract(pdf.pages[page_num], total_coord)
+
+        return total_extract
+
+
+class InvoiceAnalyzer:
+    def __init__(self, win):
+        self.win = win
+        self.win.title("RG & Son's Plumbing Invoice Analyzer")
+        self.win.geometry("600x900")
+
+        self.extracted_data = []
+
+        self.create_widgets()
+    
+    def create_widgets(self):
+        self.load_button = tk.Button(self.win, text = "Import Invoices PDF", command = self.load_data)
+        self.load_button.pack(pady = 10)
+
+        self.export_button = tk.Button(self.win, text = "Export to CSV", state=tk.DISABLED)
+        self.export_button.pack(pady = 10)
+
+        self.result_text = tk.Text(self.win, height = 500, width = 800)
+        self.result_text.pack(pady = 10)
+
+    
+    def inv_data(self, pdf, page_num):
+        num = ServiceInvoiceCoords.job(self, pdf, page_num)
+        date = ServiceInvoiceCoords.date(self, pdf, page_num)
+        inv_num = ServiceInvoiceCoords.inv_num(self, pdf, page_num)
+        total = ServiceInvoiceCoords.total(self, pdf, page_num)
+
+        return [num, inv_num, total, date]
+    
+    def analyze_pdf(self, pdf):
+        info = ""
+
+        for page in range(len(pdf.pages)):
+            info += f"Invoice data on page {page + 1}:\n"
+
+            data = self.inv_data(pdf, page)
+            check = self.service_indirect_filter(data)
+
+            info += f"  Order Number: {data[0]}\n"
+            info += f"Invoice Number: {data[1]}\n"
+            info += f"     Total Due: {data[2]}\n"
+            info += f"          Date: {data[3]}\n"
+
+            info += f"     Cost Code: {check}\n"
+
+            self.extracted_data.append([data[0], data[1], data[2], data[3]])
+
+        return info
+    
+    def extract(self, page, section):
+        piece = page.crop(section)
+        text = piece.extract_text()
+        
+        return text
+
+    def load_data(self):
+        pdf = filedialog.askopenfilename(title="PDF Files", filetypes=[("PDF Files", "*.pdf")])
+
+        with pdfplumber.open(pdf) as file:
+            self.result_text.delete(1.0, tk.END)
+            self.extracted_data = []
+
+            analyzed_data = self.analyze_pdf(file)
+            self.result_text.insert(tk.END, analyzed_data)
+            self.export_button.config(state=tk.NORMAL, command=lambda: self.export_info_csv(self.extracted_data))
+    
+    def export_info_csv(self, data):
+        file = filedialog.askopenfilename(filetypes=["CSV Files", "*.csv"])
+
+        headers = ["Order Number", "Invoice Number", "Total Due", "Date", "Cost Code"]
+
+        with open(file, mode='w', newline='') as csv:
+            writer = csv.DictWriter(csv, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(data)
+
+    def service_indirect_filter(self, data):
+        initials = ["KO", "TP", "RT", "IP", "GM"]
+        check = data[0]
+
+        first_two = check[:2]
+
+        if first_two in initials or check.isnumeric() and len(check) == 8:
+            return "3. Service" + "\n"
+        else:
+            return "1. Indirect" + "\n"
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = InvoiceAnalyzer(root)
+
+    root.mainloop()
