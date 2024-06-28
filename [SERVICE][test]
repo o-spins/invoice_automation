@@ -3,6 +3,7 @@ from tkinter import filedialog
 import pdfplumber
 import csv
 
+
 class ServiceInvoiceCoords:
     def __init__(self, pdf, page, page_num, section):
         self.pdf = pdf
@@ -15,19 +16,19 @@ class ServiceInvoiceCoords:
         job_extract = self.extract(pdf.pages[page_num], job_coord)
 
         return job_extract
-    
+
     def date(self, pdf, page_num):
         date_coord = (502, 270, 543, 287)
         date_extract = self.extract(pdf.pages[page_num], date_coord)
 
         return date_extract
-    
+
     def inv_num(self, pdf, page_num):
         inv_coord = (356, 48, 403, 58)
         inv_extract = self.extract(pdf.pages[page_num], inv_coord)
 
         return inv_extract
-    
+
     def total(self, pdf, page_num):
         total_coord = (419, 46, 476, 59)
         total_extract = self.extract(pdf.pages[page_num], total_coord)
@@ -44,18 +45,17 @@ class InvoiceAnalyzer:
         self.extracted_data = []
 
         self.create_widgets()
-    
+
     def create_widgets(self):
-        self.load_button = tk.Button(self.win, text = "Import Invoices PDF", command = self.load_data)
-        self.load_button.pack(pady = 10)
+        self.load_button = tk.Button(self.win, text="Import Invoices PDF", command=self.load_data)
+        self.load_button.pack(pady=10)
 
-        self.export_button = tk.Button(self.win, text = "Export to CSV", state=tk.DISABLED)
-        self.export_button.pack(pady = 10)
+        self.export_button = tk.Button(self.win, text="Export to CSV", state=tk.DISABLED)
+        self.export_button.pack(pady=10)
 
-        self.result_text = tk.Text(self.win, height = 500, width = 800)
-        self.result_text.pack(pady = 10)
+        self.result_text = tk.Text(self.win, height=500, width=800)
+        self.result_text.pack(pady=10)
 
-    
     def inv_data(self, pdf, page_num):
         num = ServiceInvoiceCoords.job(self, pdf, page_num)
         date = ServiceInvoiceCoords.date(self, pdf, page_num)
@@ -63,7 +63,7 @@ class InvoiceAnalyzer:
         total = ServiceInvoiceCoords.total(self, pdf, page_num)
 
         return [num, inv_num, total, date]
-    
+
     def analyze_pdf(self, pdf):
         info = ""
 
@@ -83,11 +83,11 @@ class InvoiceAnalyzer:
             self.extracted_data.append([data[0], data[1], data[2], data[3]])
 
         return info
-    
+
     def extract(self, page, section):
         piece = page.crop(section)
         text = piece.extract_text()
-        
+
         return text
 
     def load_data(self):
@@ -100,9 +100,9 @@ class InvoiceAnalyzer:
             analyzed_data = self.analyze_pdf(file)
             self.result_text.insert(tk.END, analyzed_data)
             self.export_button.config(state=tk.NORMAL, command=lambda: self.export_info_csv(self.extracted_data))
-    
+
     def export_info_csv(self, data):
-        file = filedialog.askopenfilename(filetypes=["CSV Files", "*.csv"])
+        file = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")]])
 
         headers = ["Order Number", "Invoice Number", "Total Due", "Date", "Cost Code"]
 
