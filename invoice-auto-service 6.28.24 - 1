@@ -75,11 +75,14 @@ class InvoiceAnalyzer:
             info += f"Invoice data on page {page + 1}\n"
 
             data = self.inv_data(pdf, page)
+            check = self.service_indirect_filter(data)
 
             info += f"Order Number:    {data[0]}\n"
             info += f"Invoice Number:  {data[1]}\n"
             info += f"Total Due:       {data[2]}\n"
             info += f"Date:            {data[3]}\n"
+
+            info += f"Invoice type:    {check}\n"
 
         print(info) 
     
@@ -91,6 +94,18 @@ class InvoiceAnalyzer:
     
     def export_csv(self):
         pass
+
+    def service_indirect_filter(self, data):
+        initials = ["KO", "TP", "RT", "IP", "GM"]
+        check = data[0]
+
+        first_two_letters = check[:2]
+
+        if first_two_letters in initials or check.isnumeric() and len(check) == 8:
+            return "Service" + "\n"
+        else:
+            return "Indirect" + "\n"
+
 
 if __name__ == "__main__":
     root = tk.Tk()
